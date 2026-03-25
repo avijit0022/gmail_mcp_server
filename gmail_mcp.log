@@ -1,0 +1,9 @@
+2026-03-25 15:53:21,282 - gmail_mcp_server - INFO - Starting Gmail MCP Server on http://localhost:9001 ...
+INFO:     Started server process [8845]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://localhost:9001 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [8845]
