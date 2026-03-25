@@ -11,13 +11,14 @@ from typing import Optional
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    #format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler(os.path.join(pathlib.Path(__file__).parent.resolve(), 'gmail_mcp.log')),
         logging.StreamHandler()
     ]
 )
-logger = logging.getLogger('gmail_mcp_server')
+
+logger = logging.getLogger("     "+__name__)
 
 def file_path():
     """Returns the directory path of the current script."""
@@ -58,16 +59,17 @@ try:
     from email.utils import formatdate
     from email import encoders
     from mcp.server.fastmcp import FastMCP
-    print(f"Successfully imported modules from the virtual environment.")
+    logger.info(f"Successfully imported modules from the virtual environment.")
 except ImportError:
-    print(f"Error: Could not import your_module_name. Make sure it's installed in the virtual environment at {site_packages_path}")
-
+    logger.error(f"Error: Could not import your_module_name. Make sure it's installed in the virtual environment at {site_packages_path}")
+    sys.exit
 
 # Reading Environment Variables
 
 ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 GMAIL_MCP_PORT = int(os.getenv("GMAIL_MCP_SERVER_PORT", 9000))
 GMAIL_MCP_HOST = os.getenv("GMAIL_MCP_SERVER_HOST", "localhost")
+SENDER = os.getenv("SENDER_EMAIL", None)
 
 
 mcp = FastMCP(name="gmail_mcp_server", host=GMAIL_MCP_HOST, port=GMAIL_MCP_PORT)
@@ -75,7 +77,7 @@ warnings.filterwarnings('ignore')
 
 
 @mcp.tool()
-def send_html_mail(receiver_email : str, body : str, cc_email  : Optional[str] = None, files : Optional[dict] = None, images : Optional[dict] = None, sender_email : str = "avijitpal0022@gmail.com") -> str:
+def send_html_mail(receiver_email : str, body : str, cc_email  : Optional[str] = None, files : Optional[dict] = None, images : Optional[dict] = None) -> str:
     """
     Sends an HTML email with optional attachments using Gmail's SMTP server.
 
@@ -180,7 +182,14 @@ def send_html_mail(receiver_email : str, body : str, cc_email  : Optional[str] =
     """
     logger.info(f"Attempting to send email to: {receiver_email}")
     
+    sender_email = SENDER
+
     # Validate email addresses
+    if not sender_email:
+        error_msg = f"Sender Email Not set."
+        logger.error(error_msg)
+        return f"Error: {error_msg}"
+
     if not validate_email(receiver_email):
         error_msg = f"Invalid receiver email format: {receiver_email}"
         logger.error(error_msg)
@@ -314,7 +323,7 @@ def send_html_mail(receiver_email : str, body : str, cc_email  : Optional[str] =
 if __name__ == "__main__":
     logger.info(f"Starting Gmail MCP Server on http://{GMAIL_MCP_HOST}:{GMAIL_MCP_PORT} ...")
     try:
-        mcp.run(transport="sse")
+        mcp.run(transport="streamable-http")
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
     except Exception as e:
