@@ -5,7 +5,7 @@ An MCP (Model Context Protocol) server that exposes Gmail sending capabilities a
 ## Features
 
 - Send HTML emails with optional CC, file attachments, and inline images
-- Runs as an SSE MCP server
+- Runs as a Streamable HTTP MCP server
 - Gmail App Password authentication (no OAuth required)
 
 ## Prerequisites
@@ -42,6 +42,7 @@ Edit `.env` and fill in your values:
 
 ```env
 ACCESS_TOKEN=your_gmail_app_password
+SENDER_EMAIL=your_gmail_address@gmail.com
 
 GMAIL_MCP_SERVER_HOST=localhost
 GMAIL_MCP_SERVER_PORT=9000
@@ -86,7 +87,7 @@ Add the server to your Claude MCP configuration:
 {
   "mcpServers": {
     "gmail": {
-      "url": "http://localhost:9000/sse"
+      "url": "http://localhost:9000/mcp"
     }
   }
 }
@@ -105,7 +106,8 @@ Sends an HTML email via Gmail SMTP.
 | `cc_email` | `str` | No | CC recipient email address |
 | `files` | `dict` | No | `{"filename.ext": "/full/path/to/file"}` |
 | `images` | `dict` | No | `{"image.png": "/full/path/to/image.png"}` |
-| `sender_email` | `str` | No | Sender Gmail address (defaults to configured account) |
+
+The sender address is configured via the `SENDER_EMAIL` environment variable.
 
 Returns `"Email sent successfully."` on success, or an error message on failure.
 
