@@ -72,111 +72,101 @@ GMAIL_MCP_HOST = os.getenv("GMAIL_MCP_SERVER_HOST", "localhost")
 SENDER = os.getenv("SENDER_EMAIL", None)
 
 
-mcp = FastMCP(name="gmail_mcp_server", host=GMAIL_MCP_HOST, port=GMAIL_MCP_PORT)
+mcp = FastMCP(name="gmail_mcp_server", host=GMAIL_MCP_HOST, port=GMAIL_MCP_PORT, streamable_http_path="/mcp")
 warnings.filterwarnings('ignore')
 
 
 @mcp.tool()
-def send_html_mail(receiver_email : str, body : str, cc_email  : Optional[str] = None, files : Optional[dict] = None, images : Optional[dict] = None) -> str:
+def send_html_mail(receiver_email : str, body : str, email_subject : Optional[str] = None, cc_email  : Optional[str] = None, files : Optional[dict] = None, images : Optional[dict] = None) -> str:
     """
-    Sends an HTML email with optional attachments using Gmail's SMTP server.
+    Sends a beautifully formatted HTML email with optional attachments using Gmail's SMTP server.
 
-    This tool sends a customizable HTML email through Gmail's SMTP service with
-    support for CC recipients and file attachments.
+    This tool sends a richly styled HTML email through Gmail's SMTP service with
+    support for CC recipients, file attachments, and inline images.
+
+    IMPORTANT — The `body` parameter accepts full HTML markup. You should provide
+    well-structured, visually appealing HTML to produce professional-looking emails.
+    Use modern HTML email best practices:
+
+    - Use inline CSS styles (e.g., `style="color: #333; font-family: Arial, sans-serif;"`)
+      since most email clients strip `<style>` blocks.
+    - Use `<table>` layouts for consistent rendering across email clients.
+    - Structure content with headings (`<h1>`–`<h3>`), paragraphs (`<p>`),
+      lists (`<ul>`, `<ol>`), dividers (`<hr>`), and blockquotes (`<blockquote>`).
+    - Add visual polish with background colors, padding, borders, and spacing.
+    - Wrap the entire body in a container table for centered, max-width layouts.
+
+    Example of a well-formatted HTML body:
+        ```
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f4;">
+          <tr><td align="center" style="padding:20px;">
+            <table width="600" cellpadding="0" cellspacing="0"
+                   style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+              <tr><td style="background-color:#4A90D9; padding:24px; text-align:center;">
+                <h1 style="color:#ffffff; margin:0; font-family:Arial,sans-serif;">Email Title</h1>
+              </td></tr>
+              <tr><td style="padding:24px; font-family:Arial,sans-serif; color:#333333; line-height:1.6;">
+                <p>Hello,</p>
+                <p>This is a <strong>beautifully formatted</strong> email with a
+                   <a href="https://example.com" style="color:#4A90D9;">link</a>.</p>
+                <hr style="border:none; border-top:1px solid #eeeeee; margin:16px 0;">
+                <p style="font-size:12px; color:#999999;">Footer text here.</p>
+              </td></tr>
+            </table>
+          </td></tr>
+        </table>
+        ```
 
     Args:
         receiver_email (str): The primary recipient's email address.
             Must be a valid email format (e.g., "user@example.com").
-        body (str): The HTML content of the email body.
-            Can include any valid HTML markup for formatting.
+        body (str): The full HTML content of the email body. Provide beautifully
+            formatted HTML with inline CSS styles for professional-looking emails.
+            Supports all standard HTML elements: headings, paragraphs, tables,
+            lists, links, images, dividers, blockquotes, and more.
+        email_subject (Optional[str]): The subject line of the email.
+            Defaults to "Automated Mail" if not provided.
         cc_email (Optional[str]): Carbon copy recipient's email address.
             Defaults to None if no CC is needed.
         files (Optional[dict]): Dictionary of file attachments.
             Keys are filenames with extensions (e.g., "report.pdf").
-            Values are full file paths (e.g., "C:/Documents/report.pdf").
+            Values are full file paths (e.g., "/home/user/Documents/report.pdf").
             Defaults to None if no attachments are needed.
-        images (Optional[dict]): Dictionary of images to embed in the email body.
+        images (Optional[dict]): Dictionary of images to embed inline in the email body.
             Keys are image names with extensions (e.g., "logo.png").
-            Values are full file paths (e.g., "C:/Images/logo.png").
-            Defaults to None if no images are needed.
-        sender_email (str): The sender's Gmail address used for authentication.
-            Defaults to "avijitpal0022@gmail.com".
+            Values are full file paths (e.g., "/home/user/Images/logo.png").
+            Images are referenced via `cid:img1`, `cid:img2`, etc. in order.
+            Defaults to None if no inline images are needed.
 
     Returns:
         str: A status message indicating success or failure.
-            - On success: "Email sent successfully."
-            - On failure: Returns error message with details.
-
-    Input Schema:
-        {
-            "receiver_email": "string (required) - Primary recipient email",
-            "body": "string (required) - HTML content for the email body",
-            "cc_email": "string (optional) - CC recipient email, defaults to None",
-            "files": "dict (optional) - Dictionary of {filename: filepath} to attach, defaults to None",
-            "images": "dict (optional) - Dictionary of {imagename: imagepath} to embed in the email body, defaults to None",
-            "sender_email": "string (optional) - Sender Gmail, defaults to 'avijitpal0022@gmail.com'"
-        }
-
-    Output Schema:
-        {
-            "result": "string - Status message indicating email delivery result"
-        }
+            - On success: "Email sent successfully to: <recipients>"
+            - On failure: "Error: <details>"
 
     Example:
-        # Send a simple email
+        # Send a simple styled email
         >>> send_html_mail(
         ...     receiver_email="recipient@example.com",
-        ...     body="<p>Hello, this is a test email.</p>"
+        ...     body='<div style="font-family:Arial,sans-serif; padding:20px;">'
+        ...          '<h2 style="color:#2c3e50;">Hello!</h2>'
+        ...          '<p style="color:#555;">This is a <strong>styled</strong> email.</p></div>'
         ... )
         "Email sent successfully."
 
-        # Send email with CC
-        >>> send_html_mail(
-        ...     receiver_email="primary@example.com",
-        ...     body="<h1>Meeting Notes</h1><p>Please review.</p>",
-        ...     cc_email="copy@example.com"
-        ... )
-        "Email sent successfully."
-
-        # Send email with attachments
+        # Send email with attachments and CC
         >>> send_html_mail(
         ...     receiver_email="recipient@example.com",
-        ...     body="<p>Please find the attached documents.</p>",
-        ...     files={
-        ...         "report.pdf": "C:/Documents/report.pdf",
-        ...         "data.xlsx": "C:/Documents/data.xlsx"
-        ...     }
-        ... )
-        "Email sent successfully."
-
-        # Send from a different Gmail account with all options
-        >>> send_html_mail(
-        ...     receiver_email="recipient@example.com",
-        ...     body="<p>Quarterly report attached.</p>",
+        ...     body='<p style="font-family:Arial;">Please find the attached report.</p>',
+        ...     email_subject="Q4 Report",
         ...     cc_email="manager@example.com",
-        ...     files={"Q4_Report.pdf": "/path/to/Q4_Report.pdf"},
-        ...     sender_email="alternate@gmail.com"
+        ...     files={"Q4_Report.pdf": "/path/to/Q4_Report.pdf"}
         ... )
         "Email sent successfully."
-
-    Usage:
-        1. Ensure credential.txt contains a valid Gmail App Password.
-        2. Call the tool with receiver_email and body parameters (required).
-        3. Optionally add cc_email, files, or sender_email as needed.
-        4. The tool authenticates via SMTP TLS on port 587.
-        5. Email is sent with subject "Automated Mail" and the provided HTML body.
-
-    Raises:
-        Error messages are returned (not raised) for:
-        - Invalid email format (receiver, sender, or CC)
-        - Missing or empty credential file
-        - SMTP authentication failures
-        - Connection timeouts
-        - File attachment errors (file not found, permission denied)
 
     Note:
-        - Requires a Gmail App Password stored in credential.txt (not regular password).
+        - Requires a Gmail App Password set via ACCESS_TOKEN env var (not regular password).
         - Gmail must have 2FA enabled and an App Password generated.
+        - Use inline CSS only — most email clients ignore <style> blocks and external stylesheets.
         - Supported attachment types: Any file type (PDF, XLSX, images, etc.)
         - Maximum email size with attachments is subject to Gmail's 25MB limit.
     """
@@ -205,6 +195,8 @@ def send_html_mail(receiver_email : str, body : str, cc_email  : Optional[str] =
         logger.error(error_msg)
         return f"Error: {error_msg}"
     
+    subject = email_subject if email_subject else "Automated Mail"
+    
     # Get credentials
     try:
         if not ACCESS_TOKEN:
@@ -217,7 +209,7 @@ def send_html_mail(receiver_email : str, body : str, cc_email  : Optional[str] =
     # Compose the email
     try:
         message = MIMEMultipart("alternative")
-        message["Subject"] = "Automated Mail"
+        message["Subject"] = subject
         message["From"] = sender_email
         message["To"] = receiver_email      
         if cc_email:
@@ -278,7 +270,7 @@ def send_html_mail(receiver_email : str, body : str, cc_email  : Optional[str] =
             server.sendmail(sender_email, recipients, message.as_string())
             logger.info(f"Email sent successfully to: {', '.join(recipients)}")
             
-        return "Email sent successfully."
+        return f"Email sent successfully to: {', '.join(recipients)}"
         
     except smtplib.SMTPAuthenticationError as e:
         error_msg = "Authentication failed. Check your Gmail App Password and ensure 2FA is enabled."
@@ -321,7 +313,7 @@ def send_html_mail(receiver_email : str, body : str, cc_email  : Optional[str] =
         return f"Error: {error_msg}"
 
 if __name__ == "__main__":
-    logger.info(f"Starting Gmail MCP Server on http://{GMAIL_MCP_HOST}:{GMAIL_MCP_PORT} ...")
+    logger.info(f"Starting Gmail MCP Server on http://{GMAIL_MCP_HOST}:{GMAIL_MCP_PORT}/mcp ...")
     try:
         mcp.run(transport="streamable-http")
     except KeyboardInterrupt:
