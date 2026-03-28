@@ -12,6 +12,35 @@ VENV_NAME=".venv"
 echo "Setting up Gmail MCP Server"
 echo "============================"
 
+# Check for Python
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "Python3 not found. Attempting to install..."
+    if command -v apt-get >/dev/null 2>&1; then
+        sudo apt-get update && sudo apt-get install -y python3 python3-venv python3-pip
+    elif command -v dnf >/dev/null 2>&1; then
+        sudo dnf install -y python3 python3-pip
+    elif command -v yum >/dev/null 2>&1; then
+        sudo yum install -y python3 python3-pip
+    elif command -v pacman >/dev/null 2>&1; then
+        sudo pacman -Sy --noconfirm python python-pip
+    elif command -v brew >/dev/null 2>&1; then
+        brew install python3
+    else
+        echo "ERROR: Could not install Python3 automatically."
+        echo "Please install Python 3.10+ manually from https://www.python.org/downloads/"
+        exit 1
+    fi
+
+    if ! command -v python3 >/dev/null 2>&1; then
+        echo "ERROR: Python3 installation failed."
+        exit 1
+    fi
+    echo "Python3 installed successfully."
+fi
+
+PYTHON_VERSION=$(python3 --version 2>&1)
+echo "Found $PYTHON_VERSION"
+
 # Check for uv or pip
 command_exists() {
     command -v "$1" >/dev/null 2>&1

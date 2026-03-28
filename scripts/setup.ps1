@@ -11,6 +11,41 @@ $VenvName = ".venv"
 Write-Host "Setting up Gmail MCP Server"
 Write-Host "============================"
 
+# Check for Python
+$hasPython = $null -ne (Get-Command python -ErrorAction SilentlyContinue)
+
+if (-not $hasPython) {
+    Write-Host "Python not found. Attempting to install..."
+    $hasWinget = $null -ne (Get-Command winget -ErrorAction SilentlyContinue)
+    $hasChoco  = $null -ne (Get-Command choco  -ErrorAction SilentlyContinue)
+    $hasScoop  = $null -ne (Get-Command scoop  -ErrorAction SilentlyContinue)
+
+    if ($hasWinget) {
+        winget install --id Python.Python.3.12 --accept-source-agreements --accept-package-agreements
+    } elseif ($hasChoco) {
+        choco install python3 -y
+    } elseif ($hasScoop) {
+        scoop install python
+    } else {
+        Write-Error "ERROR: Could not install Python automatically."
+        Write-Host "Please install Python 3.10+ from https://www.python.org/downloads/"
+        exit 1
+    }
+
+    # Refresh PATH so the current session picks up the new install
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+
+    $hasPython = $null -ne (Get-Command python -ErrorAction SilentlyContinue)
+    if (-not $hasPython) {
+        Write-Error "ERROR: Python installation failed. You may need to restart your terminal."
+        exit 1
+    }
+    Write-Host "Python installed successfully."
+}
+
+$pythonVersion = python --version 2>&1
+Write-Host "Found $pythonVersion"
+
 # Check for uv or pip
 $hasUv  = $null -ne (Get-Command uv  -ErrorAction SilentlyContinue)
 $hasPip = $null -ne (Get-Command pip -ErrorAction SilentlyContinue)

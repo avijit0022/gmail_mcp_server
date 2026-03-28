@@ -17,24 +17,38 @@ An MCP (Model Context Protocol) server that exposes Gmail sending capabilities a
 
 ## Setup
 
-### Linux / macOS
+### Cross-Platform (Recommended)
+
+```bash
+python scripts/setup.py
+```
+
+Works on Linux, macOS, and Windows. The script will:
+1. Verify Python 3.10+ is installed
+2. Create a `.venv` virtual environment (using `uv` if available, otherwise `venv` + `pip`)
+3. Install dependencies from `requirements.txt`
+4. Copy `.env.template` → `.env` if it doesn't exist yet
+
+### Platform-Specific (Alternative)
+
+<details>
+<summary>Linux / macOS</summary>
 
 ```bash
 bash scripts/setup.sh
 ```
+Automatically installs Python via your system package manager if not found.
+</details>
 
-### Windows (PowerShell)
+<details>
+<summary>Windows (PowerShell)</summary>
 
 ```powershell
-# Allow local scripts to run (one-time, per machine)
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-
 .\scripts\setup.ps1
 ```
-
-Both scripts will:
-1. Create a `.venv` virtual environment and install dependencies
-2. Copy `.env.template` → `.env` if it doesn't exist yet
+Automatically installs Python via `winget`, `choco`, or `scoop` if not found.
+</details>
 
 ### Configure `.env`
 
@@ -55,29 +69,33 @@ SMTP_PORT=587
 
 ### Start the server
 
-**Linux / macOS**
 ```bash
-bash scripts/start.sh
+python scripts/start.py
 ```
-
-**Windows**
-```powershell
-.\scripts\start.ps1
-```
-
-The server starts in the background and logs to `gmail_mcp.log`.
 
 ### Stop the server
 
+```bash
+python scripts/stop.py
+```
+
+The server runs in the background and logs to `gmail_mcp.log`.
+
+<details>
+<summary>Platform-specific alternatives</summary>
+
 **Linux / macOS**
 ```bash
+bash scripts/start.sh
 bash scripts/stop.sh
 ```
 
-**Windows**
+**Windows (PowerShell)**
 ```powershell
+.\scripts\start.ps1
 .\scripts\stop.ps1
 ```
+</details>
 
 ## Connecting to Claude
 
@@ -86,9 +104,10 @@ Add the server to your Claude MCP configuration:
 ```json
 {
   "mcpServers": {
-    "gmail": {
-      "url": "http://localhost:9000/mcp"
-    }
+    "gmail_mcp_server":{ 
+			"type": "http",
+			"url": "http://localhost:9001/mcp"
+		}
   }
 }
 ```
@@ -103,6 +122,7 @@ Sends an HTML email via Gmail SMTP.
 |---|---|---|---|
 | `receiver_email` | `str` | Yes | Primary recipient email address |
 | `body` | `str` | Yes | HTML content of the email body |
+| `subject` | `str` | No | Mail Subject |
 | `cc_email` | `str` | No | CC recipient email address |
 | `files` | `dict` | No | `{"filename.ext": "/full/path/to/file"}` |
 | `images` | `dict` | No | `{"image.png": "/full/path/to/image.png"}` |
@@ -121,7 +141,10 @@ gmail_agent/
 ├── .env                  # Your local config (git-ignored)
 ├── gmail_mcp.log         # Runtime log (auto-created)
 └── scripts/
-    ├── setup.sh / setup.ps1   # One-time environment setup
-    ├── start.sh / start.ps1   # Start the server
-    └── stop.sh  / stop.ps1    # Stop the server
+    ├── setup.py               # Cross-platform setup
+    ├── start.py               # Cross-platform start
+    ├── stop.py                # Cross-platform stop
+    ├── setup.sh / setup.ps1   # Platform-specific setup (alternative)
+    ├── start.sh / start.ps1   # Platform-specific start (alternative)
+    └── stop.sh  / stop.ps1    # Platform-specific stop (alternative)
 ```
